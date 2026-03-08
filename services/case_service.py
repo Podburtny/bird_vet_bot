@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from repositories.attachment_repo import AttachmentRepository
 from repositories.case_repo import CaseRepository
 from repositories.message_repo import MessageRepository
 from repositories.user_repo import UserRepository
@@ -11,6 +12,7 @@ class CaseService:
         self.user_repo = UserRepository(session)
         self.case_repo = CaseRepository(session)
         self.message_repo = MessageRepository(session)
+        self.attachment_repo = AttachmentRepository(session)
 
     def ensure_user_and_case(
         self,
@@ -65,6 +67,26 @@ class CaseService:
 
         self.session.commit()
         return case, message
+
+    def save_photo_attachment(
+        self,
+        message_id,
+        storage_path: str,
+        telegram_file_id: str | None = None,
+        mime_type: str | None = None,
+        file_size: int | None = None,
+        position: int = 0,
+    ):
+        attachment = self.attachment_repo.create_attachment(
+            message_id=message_id,
+            storage_path=storage_path,
+            telegram_file_id=telegram_file_id,
+            mime_type=mime_type,
+            file_size=file_size,
+            position=position,
+        )
+        self.session.commit()
+        return attachment
 
     def save_assistant_message(
         self,
