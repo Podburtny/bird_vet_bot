@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from models.db import Message
@@ -40,3 +40,11 @@ class MessageRepository:
         )
         result = self.session.execute(stmt).scalars().all()
         return list(reversed(result))
+
+    def count_user_messages(self, case_id) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(Message)
+            .where(Message.case_id == case_id, Message.role == "user")
+        )
+        return int(self.session.execute(stmt).scalar() or 0)

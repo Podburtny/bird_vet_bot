@@ -19,6 +19,10 @@ class CaseRepository:
         )
         return self.session.execute(stmt).scalar_one_or_none()
 
+    def get_by_id(self, case_id) -> Case | None:
+        stmt = select(Case).where(Case.id == case_id)
+        return self.session.execute(stmt).scalar_one_or_none()
+
     def create_case(self, user_id: int, title: str | None = None) -> Case:
         now = datetime.now(timezone.utc)
         case = Case(
@@ -37,6 +41,11 @@ class CaseRepository:
         now = datetime.now(timezone.utc)
         case.last_active = now
         case.expires_at = now + timedelta(days=3)
+        self.session.flush()
+        return case
+
+    def update_summary(self, case: Case, summary: str) -> Case:
+        case.summary = summary
         self.session.flush()
         return case
 

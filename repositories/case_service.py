@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
 
+from repositories.attachment_repo import AttachmentRepository
 from repositories.case_repo import CaseRepository
 from repositories.message_repo import MessageRepository
 from repositories.user_repo import UserRepository
+from services.summary_service import SummaryService
 
 
 class CaseService:
@@ -11,6 +13,8 @@ class CaseService:
         self.user_repo = UserRepository(session)
         self.case_repo = CaseRepository(session)
         self.message_repo = MessageRepository(session)
+        self.attachment_repo = AttachmentRepository(session)
+        self.summary_service = SummaryService()
 
     def ensure_user_and_case(
         self,
@@ -65,6 +69,67 @@ class CaseService:
 
         self.session.commit()
         return case, message
+
+    def save_photo_attachment(
+        self,
+        message_id,
+        storage_path: str,
+        telegram_file_id: str | None = None,
+        mime_type: str | None = None,
+        file_size: int | None = None,
+        position: int = 0,
+    ):
+        attachment = self.attachment_repo.create_attachment(
+            message_id=message_id,
+            storage_path=storage_path,
+            telegram_file_id=telegram_file_id,
+            mime_type=mime_type,
+            file_size=file_size,
+            position=position,
+        )
+        self.session.commit()
+        return attachment
+
+    def save_assistant_message(
+        self,
+        case_id,
+        content: str,
+        model_name: str | None = None,
+    ):
+        message = self.message_repo.create_message(
+            case_id=case_id,
+            role="assistant",
+            content=content,
+            message_type="text",
+            model_name=model_name,
+        )
+        self.session.commit()
+        return message
+
+    def get_history_for_case(self, case_id, limit: int = 20) -> list[dict]:
+        messages = self.message_repo.get_last_messages(case_id=case_id, limit=limit)
+        return [
+            {
+                "role": item.role,
+                "content": item.content,
+            }
+            for item in messages
+            if item.content
+        ]
+
+    def maybe_update_summary(self, case_id) -> None:
+        count = self.message_repo.count_user_messages(case_id)
+        if count == 0 or count % 6 != 0:
+            return
+
+        case = self.case_repo.get_by_id(case_id)
+        if case is None:
+            return
+
+        history = self.get_history_for_case(case_id, limit=30)
+        summary = self.summary_service.build_summary(history)
+        self.case_repo.update_summary(case, summary)
+        self.session.commit()
 
     def create_new_case(
         self,

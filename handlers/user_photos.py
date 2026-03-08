@@ -82,6 +82,8 @@ async def handle_photo_message(message: Message) -> None:
                 model_name=llm_service.primary_model,
             )
 
+            case_service.maybe_update_summary(case.id)
+
         typing_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await typing_task
