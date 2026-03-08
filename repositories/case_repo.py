@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -20,7 +20,7 @@ class CaseRepository:
         return self.session.execute(stmt).scalar_one_or_none()
 
     def create_case(self, user_id: int, title: str | None = None) -> Case:
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         case = Case(
             user_id=user_id,
             title=title,
@@ -34,14 +34,14 @@ class CaseRepository:
         return case
 
     def touch_case(self, case: Case) -> Case:
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         case.last_active = now
         case.expires_at = now + timedelta(days=3)
         self.session.flush()
         return case
 
     def close_case(self, case: Case) -> Case:
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         case.status = "closed"
         case.closed_at = now
         self.session.flush()
