@@ -1,5 +1,4 @@
 from aiogram import Router
-from aiogram.filters import Command
 from aiogram.types import Message
 
 from database import SessionLocal
@@ -9,18 +8,8 @@ from ui.keyboards import main_reply_keyboard
 router = Router()
 
 
-@router.message(Command("start"))
-async def cmd_start(message: Message) -> None:
-    await message.answer(
-        "Здравствуйте 👋\n"
-        "Я бот-консультант по домашней птице.\n"
-        "Пришлите описание проблемы или фото.",
-        reply_markup=main_reply_keyboard(),
-    )
-
-
-@router.message(Command("newcase"))
-async def cmd_newcase(message: Message) -> None:
+@router.message(lambda message: message.text == "🆕 Новый случай")
+async def handle_new_case_button(message: Message) -> None:
     with SessionLocal() as session:
         service = CaseService(session)
         case = service.create_new_case(
@@ -34,8 +23,8 @@ async def cmd_newcase(message: Message) -> None:
     )
 
 
-@router.message(Command("closecase"))
-async def cmd_closecase(message: Message) -> None:
+@router.message(lambda message: message.text == "✅ Закрыть случай")
+async def handle_close_case_button(message: Message) -> None:
     with SessionLocal() as session:
         service = CaseService(session)
         case = service.close_current_case(message.from_user.id)
