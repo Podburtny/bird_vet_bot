@@ -62,18 +62,18 @@ async def handle_photo_message(message: Message) -> None:
             )
 
             history = case_service.get_history_for_case(case.id, limit=20)
-
             if history and history[-1]["role"] == "user":
                 history = history[:-1]
 
-            llm_service = LLMService()
+            image_urls = case_service.get_recent_image_urls_for_case(case.id, limit=5)
 
+            llm_service = LLMService()
             assistant_reply = await asyncio.to_thread(
                 llm_service.chat,
-                caption if caption else "Посмотрите фото птицы и подскажите, что видно и что проверить.",
+                caption if caption else "Проанализируйте фото птицы с учётом всех фото текущего случая и подскажите, что видно и что проверить.",
                 case.summary,
                 history,
-                [photo_info["signed_url"]],
+                image_urls,
             )
 
             case_service.save_assistant_message(

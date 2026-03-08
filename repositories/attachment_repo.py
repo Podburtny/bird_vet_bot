@@ -1,6 +1,7 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models.db import Attachment
+from models.db import Attachment, Message
 
 
 class AttachmentRepository:
@@ -27,3 +28,13 @@ class AttachmentRepository:
         self.session.add(attachment)
         self.session.flush()
         return attachment
+
+    def get_recent_attachments_for_case(self, case_id, limit: int = 5) -> list[Attachment]:
+        stmt = (
+            select(Attachment)
+            .join(Message, Attachment.message_id == Message.id)
+            .where(Message.case_id == case_id)
+            .order_by(Message.created_at.desc(), Attachment.position.asc())
+            .limit(limit)
+        )
+        return list(reversed(self.session.execute(stmt).scalars().all()))

@@ -5,6 +5,7 @@ from repositories.case_repo import CaseRepository
 from repositories.message_repo import MessageRepository
 from repositories.user_repo import UserRepository
 from services.summary_service import SummaryService
+from storage.supabase_storage import SupabaseStorage
 
 
 class CaseService:
@@ -15,6 +16,7 @@ class CaseService:
         self.message_repo = MessageRepository(session)
         self.attachment_repo = AttachmentRepository(session)
         self.summary_service = SummaryService()
+        self.storage = SupabaseStorage()
 
     def ensure_user_and_case(
         self,
@@ -116,6 +118,19 @@ class CaseService:
             for item in messages
             if item.content
         ]
+
+    def get_recent_image_urls_for_case(self, case_id, limit: int = 5) -> list[str]:
+        attachments = self.attachment_repo.get_recent_attachments_for_case(case_id=case_id, limit=limit)
+        urls: list[str] = []
+
+        for attachment in attachments:
+            try:
+                signed_url = self.storage.create_signed_url(attachment.storage_path)
+                urls.append(signed_url)
+            except Exception:
+                continue
+
+        return urls
 
     def maybe_update_summary(self, case_id) -> None:
         count = self.message_repo.count_user_messages(case_id)

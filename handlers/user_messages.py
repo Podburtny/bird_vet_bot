@@ -45,17 +45,18 @@ async def handle_text_message(message: Message) -> None:
             )
 
             history = case_service.get_history_for_case(case.id, limit=20)
-
             if history and history[-1]["role"] == "user" and history[-1]["content"] == message.text:
                 history = history[:-1]
 
-            llm_service = LLMService()
+            image_urls = case_service.get_recent_image_urls_for_case(case.id, limit=5)
 
+            llm_service = LLMService()
             assistant_reply = await asyncio.to_thread(
                 llm_service.chat,
                 message.text,
                 case.summary,
                 history,
+                image_urls if image_urls else None,
             )
 
             case_service.save_assistant_message(
