@@ -4,6 +4,7 @@ from repositories.attachment_repo import AttachmentRepository
 from repositories.case_repo import CaseRepository
 from repositories.message_repo import MessageRepository
 from repositories.user_repo import UserRepository
+from services.summary_service import SummaryService
 
 
 class CaseService:
@@ -13,6 +14,7 @@ class CaseService:
         self.case_repo = CaseRepository(session)
         self.message_repo = MessageRepository(session)
         self.attachment_repo = AttachmentRepository(session)
+        self.summary_service = SummaryService()
 
     def ensure_user_and_case(
         self,
@@ -114,6 +116,20 @@ class CaseService:
             for item in messages
             if item.content
         ]
+
+    def maybe_update_summary(self, case_id) -> None:
+        count = self.message_repo.count_user_messages(case_id)
+        if count == 0 or count % 6 != 0:
+            return
+
+        case = self.case_repo.get_by_id(case_id)
+        if case is None:
+            return
+
+        history = self.get_history_for_case(case_id, limit=30)
+        summary = self.summary_service.build_summary(history)
+        self.case_repo.update_summary(case, summary)
+        self.session.commit()
 
     def create_new_case(
         self,
