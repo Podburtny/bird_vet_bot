@@ -1,0 +1,29 @@
+[Unit]
+Description=Bird Vet Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+
+# пользователь Linux под которым будет работать бот
+User=botuser
+
+# папка проекта на сервере
+WorkingDirectory=/opt/bird-vet-bot
+
+# файл с переменными окружения
+EnvironmentFile=/etc/bird-vet-bot/env
+
+# запуск бота
+ExecStart=/opt/bird-vet-bot/venv/bin/python main.py
+
+# автоперезапуск
+Restart=always
+RestartSec=5
+
+# логирование
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

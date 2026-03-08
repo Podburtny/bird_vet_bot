@@ -1,25 +1,27 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
 
-# Virtual env
+# Virtual environments
 .venv/
 venv/
 
-# Environment
+# Environment files
 .env
 
 # IDE
 .vscode/
 .idea/
 
+# Test/cache
+.pytest_cache/
+.mypy_cache/
+
 # Logs
 *.log
 
 # OS
 .DS_Store
-
-# pytest
-.pytest_cache/
+Thumbs.db

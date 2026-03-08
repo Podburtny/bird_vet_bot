@@ -1,20 +1,21 @@
 # Bird Vet Bot
 
-Telegram бот — ИИ ветеринар по домашней птице (куры и перепела).
+Telegram-бот для консультаций по домашней птице (куры и перепела).
 
-## Stack
+## Стек
 
-- Python 3.11
+- Python 3.11+
 - aiogram 3
-- Supabase (Postgres + Storage)
-- OpenRouter (Gemini / Claude)
+- Supabase Postgres
+- Supabase Storage
+- OpenRouter
 - APScheduler
 - Sentry
 
-## Setup
+## Локальный запуск
 
-Clone repo
+### 1. Клонировать репозиторий
 
 ```bash
-git clone <repo>
+git clone https://github.com/Podburtny/bird_vet_bot.git
 cd bird_vet_bot
