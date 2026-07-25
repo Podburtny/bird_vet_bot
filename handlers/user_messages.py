@@ -21,11 +21,9 @@ async def _typing_loop(bot, chat_id: int) -> None:
         await asyncio.sleep(4)
 
 
-@router.message()
-async def handle_text_message(message: Message) -> None:
-    if not message.text:
-        return
-
+async def answer_text(message: Message, text: str) -> None:
+    """Общий путь текстового обращения: сохранить, спросить модель, ответить.
+    Используется и для обычных сообщений, и для расшифрованных голосовых."""
     reply_to_message_id = message.reply_to_message.message_id if message.reply_to_message else None
     typing_task = None
 
@@ -38,14 +36,14 @@ async def handle_text_message(message: Message) -> None:
             case, _saved_message = case_service.save_user_message(
                 telegram_user_id=message.from_user.id,
                 first_name=message.from_user.first_name,
-                content=message.text,
+                content=text,
                 tg_message_id=message.message_id,
                 reply_to_tg_message_id=reply_to_message_id,
                 message_type="text",
             )
 
             history = case_service.get_history_for_case(case.id, limit=20)
-            if history and history[-1]["role"] == "user" and history[-1]["content"] == message.text:
+            if history and history[-1]["role"] == "user" and history[-1]["content"] == text:
                 history = history[:-1]
 
             image_urls = case_service.get_recent_image_urls_for_case(case.id, limit=5)
@@ -54,7 +52,7 @@ async def handle_text_message(message: Message) -> None:
             llm_service = LLMService()
             assistant_reply = await asyncio.to_thread(
                 llm_service.chat,
-                message.text,
+                text,
                 case.summary,
                 history,
                 image_urls if image_urls else None,
@@ -89,3 +87,10 @@ async def handle_text_message(message: Message) -> None:
             "⚠️ Не удалось обработать запрос. Попробуйте ещё раз.",
             reply_markup=main_reply_keyboard(),
         )
+
+
+@router.message()
+async def handle_text_message(message: Message) -> None:
+    if not message.text:
+        return
+    await answer_text(message, message.text)

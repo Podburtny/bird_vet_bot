@@ -9,8 +9,12 @@ Telegram-бот (@tourist_bird_vet_bot) для консультаций по д�
 - aiogram 3 (long polling — не нужны домен, nginx и открытые порты)
 - SQLite (SQLAlchemy 2), схема создаётся автоматически при старте
 - Фото — на локальном диске (`DATA_DIR/photos`), в модель уходят как base64 data URI
+- Голосовые — ffmpeg (ogg→mp3) + распознавание через OpenRouter (`google/gemini-2.5-flash`)
 - OpenRouter: ответы `anthropic/claude-sonnet-4.5`, резюме `google/gemini-2.0-flash`
 - Sentry (опционально)
+
+Для голосовых на машине должен быть установлен **ffmpeg** (`apt-get install ffmpeg`
+на сервере, `brew install ffmpeg` локально).
 
 ## Локальный запуск
 
