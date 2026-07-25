@@ -1,10 +1,11 @@
+from config import settings
 from llm.client import OpenRouterClient
 
 
 class SummaryService:
     def __init__(self) -> None:
         self.client = OpenRouterClient()
-        self.model = "google/gemini-2.0-flash"
+        self.model = settings.SUMMARY_MODEL
 
     def build_summary(self, history: list[dict]) -> str:
         messages = [

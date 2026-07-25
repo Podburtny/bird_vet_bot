@@ -11,6 +11,9 @@ venv/
 # Environment files
 .env
 
+# Local data store (SQLite + photos)
+data/
+
 # IDE
 .vscode/
 .idea/

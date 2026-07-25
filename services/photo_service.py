@@ -2,12 +2,12 @@ from uuid import uuid4
 
 from aiogram import Bot
 
-from storage.supabase_storage import SupabaseStorage
+from storage.local_storage import LocalStorage, to_data_uri
 
 
 class PhotoService:
     def __init__(self) -> None:
-        self.storage = SupabaseStorage()
+        self.storage = LocalStorage()
 
     async def store_telegram_photo(
         self,
@@ -27,11 +27,9 @@ class PhotoService:
             content_type="image/jpeg",
         )
 
-        signed_url = self.storage.create_signed_url(storage_path)
-
         return {
             "storage_path": storage_path,
-            "signed_url": signed_url,
+            "signed_url": to_data_uri(content, "image/jpeg"),
             "file_size": len(content),
             "mime_type": "image/jpeg",
             "telegram_file_id": telegram_file_id,

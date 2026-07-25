@@ -1,3 +1,4 @@
+from config import settings
 from llm.builder import build_messages
 from llm.client import OpenRouterClient
 
@@ -5,7 +6,7 @@ from llm.client import OpenRouterClient
 class LLMService:
     def __init__(self) -> None:
         self.client = OpenRouterClient()
-        self.primary_model = "google/gemini-2.5-pro"
+        self.primary_model = settings.ANSWER_MODEL
 
     def chat(
         self,

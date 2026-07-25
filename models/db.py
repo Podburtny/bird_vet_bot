@@ -1,9 +1,12 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, Text, Uuid
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+# Generic Uuid: на SQLite хранится как CHAR(32), на Postgres — как native UUID.
+UUID = Uuid
 
 
 class Base(DeclarativeBase):

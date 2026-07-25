@@ -5,7 +5,7 @@ from repositories.case_repo import CaseRepository
 from repositories.message_repo import MessageRepository
 from repositories.user_repo import UserRepository
 from services.summary_service import SummaryService
-from storage.supabase_storage import SupabaseStorage
+from storage.local_storage import LocalStorage
 
 
 class CaseService:
@@ -16,7 +16,7 @@ class CaseService:
         self.message_repo = MessageRepository(session)
         self.attachment_repo = AttachmentRepository(session)
         self.summary_service = SummaryService()
-        self.storage = SupabaseStorage()
+        self.storage = LocalStorage()
 
     def ensure_user_and_case(
         self,
@@ -125,8 +125,7 @@ class CaseService:
 
         for attachment in attachments:
             try:
-                signed_url = self.storage.create_signed_url(attachment.storage_path)
-                urls.append(signed_url)
+                urls.append(self.storage.data_uri(attachment.storage_path))
             except Exception:
                 continue
 
