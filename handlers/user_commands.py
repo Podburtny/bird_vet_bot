@@ -23,13 +23,13 @@ async def cmd_start(message: Message) -> None:
 async def cmd_newcase(message: Message) -> None:
     with SessionLocal() as session:
         service = CaseService(session)
-        case = service.create_new_case(
+        service.create_new_case(
             telegram_user_id=message.from_user.id,
             first_name=message.from_user.first_name,
         )
 
     await message.answer(
-        f"🆕 Новый случай создан.\nID: {case.id}",
+        "🆕 Начинаем новый вопрос. Опишите, что случилось, или пришлите фото.",
         reply_markup=main_reply_keyboard(),
     )
 
