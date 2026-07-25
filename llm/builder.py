@@ -6,9 +6,14 @@ def build_messages(
     case_summary: str | None = None,
     history: list[dict] | None = None,
     image_urls: list[str] | None = None,
+    extra_context: str | None = None,
 ) -> list[dict]:
+    system_content = SYSTEM_PROMPT
+    if extra_context:
+        system_content = f"{SYSTEM_PROMPT}\n\n{extra_context}"
+
     messages: list[dict] = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_content},
     ]
 
     if case_summary:

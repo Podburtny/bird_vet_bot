@@ -14,12 +14,14 @@ class LLMService:
         case_summary: str | None = None,
         history: list[dict] | None = None,
         image_urls: list[str] | None = None,
+        extra_context: str | None = None,
     ) -> str:
         messages = build_messages(
             user_text=user_text,
             case_summary=case_summary,
             history=history,
             image_urls=image_urls,
+            extra_context=extra_context,
         )
 
         response = self.client.complete(

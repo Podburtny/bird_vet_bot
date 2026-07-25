@@ -25,3 +25,13 @@ class UserRepository:
         self.session.add(user)
         self.session.flush()
         return user
+
+    def get_profile(self, user_id: int) -> str | None:
+        user = self.get_by_id(user_id)
+        return user.profile_text if user else None
+
+    def set_profile(self, user_id: int, profile_text: str) -> None:
+        user = self.get_by_id(user_id)
+        if user is not None:
+            user.profile_text = profile_text
+            self.session.flush()

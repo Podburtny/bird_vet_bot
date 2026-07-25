@@ -94,6 +94,8 @@ async def _process_photo_batch(messages: list[Message]) -> None:
                     seen.add(url)
                     all_image_urls.append(url)
 
+            extra_context = case_service.get_system_context(first_message.from_user.id)
+
             llm_service = LLMService()
             assistant_reply = await asyncio.to_thread(
                 llm_service.chat,
@@ -101,6 +103,7 @@ async def _process_photo_batch(messages: list[Message]) -> None:
                 case.summary,
                 history,
                 all_image_urls[:5],
+                extra_context,
             )
 
             case_service.save_assistant_message(

@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy.orm import Session
 
+from config import settings
 from repositories.attachment_repo import AttachmentRepository
 from repositories.case_repo import CaseRepository
 from repositories.message_repo import MessageRepository
@@ -18,6 +21,27 @@ class CaseService:
         self.summary_service = SummaryService()
         self.storage = LocalStorage()
 
+    def _is_expired(self, case) -> bool:
+        last = case.last_active
+        if last is None:
+            return False
+        if last.tzinfo is None:  # SQLite отдаёт naive datetime — считаем его UTC
+            last = last.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) - last > timedelta(hours=settings.CASE_TIMEOUT_HOURS)
+
+    def _resolve_active_case(self, telegram_user_id: int):
+        """Возвращает открытый кейс; если он «протух» по таймауту — закрывает
+        его (с резюме и обновлением профиля) и открывает новый."""
+        case = self.case_repo.get_open_case_for_user(telegram_user_id)
+        if case is not None and self._is_expired(case):
+            self._finalize_case(case)
+            self.case_repo.close_case(case)
+            case = None
+        if case is None:
+            case = self.case_repo.create_case(user_id=telegram_user_id)
+        self.case_repo.touch_case(case)
+        return case
+
     def ensure_user_and_case(
         self,
         telegram_user_id: int,
@@ -30,11 +54,7 @@ class CaseService:
             role=role,
         )
 
-        case = self.case_repo.get_open_case_for_user(telegram_user_id)
-        if case is None:
-            case = self.case_repo.create_case(user_id=telegram_user_id)
-
-        self.case_repo.touch_case(case)
+        case = self._resolve_active_case(telegram_user_id)
         self.session.commit()
         return case
 
@@ -54,11 +74,7 @@ class CaseService:
             role=role,
         )
 
-        case = self.case_repo.get_open_case_for_user(telegram_user_id)
-        if case is None:
-            case = self.case_repo.create_case(user_id=telegram_user_id)
-
-        self.case_repo.touch_case(case)
+        case = self._resolve_active_case(telegram_user_id)
 
         message = self.message_repo.create_message(
             case_id=case.id,
@@ -131,6 +147,37 @@ class CaseService:
 
         return urls
 
+    def _finalize_case(self, case) -> None:
+        """При закрытии кейса: итоговое резюме + обновление профиля хозяйства.
+        Тихо пропускается, если разговор пустой или LLM недоступен."""
+        history = self.get_history_for_case(case.id, limit=40)
+        if self.message_repo.count_user_messages(case.id) == 0 or len(history) < 2:
+            return
+        try:
+            profile = self.user_repo.get_profile(case.user_id)
+            result = self.summary_service.finalize(history, profile)
+        except Exception:
+            return
+        if result.get("summary"):
+            self.case_repo.update_summary(case, result["summary"])
+        if result.get("profile"):
+            self.user_repo.set_profile(case.user_id, result["profile"])
+
+    def get_system_context(self, telegram_user_id: int) -> str | None:
+        """Профиль хозяйства + краткие итоги последних кейсов — для системного
+        промпта нового разговора."""
+        parts: list[str] = []
+        profile = self.user_repo.get_profile(telegram_user_id)
+        if profile:
+            parts.append("Профиль хозяйства (из прошлых разговоров):\n" + profile)
+        summaries = self.case_repo.recent_closed_summaries(telegram_user_id, limit=5)
+        if summaries:
+            parts.append(
+                "Итоги последних обращений (свежие сверху):\n"
+                + "\n".join(f"- {s}" for s in summaries)
+            )
+        return "\n\n".join(parts) if parts else None
+
     def maybe_update_summary(self, case_id) -> None:
         count = self.message_repo.count_user_messages(case_id)
         if count == 0 or count % 6 != 0:
@@ -159,6 +206,7 @@ class CaseService:
 
         current_case = self.case_repo.get_open_case_for_user(telegram_user_id)
         if current_case is not None:
+            self._finalize_case(current_case)
             self.case_repo.close_case(current_case)
 
         new_case = self.case_repo.create_case(user_id=telegram_user_id)
@@ -170,6 +218,7 @@ class CaseService:
         if case is None:
             return None
 
+        self._finalize_case(case)
         self.case_repo.close_case(case)
         self.session.commit()
         return case

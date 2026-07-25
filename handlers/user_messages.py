@@ -49,6 +49,7 @@ async def handle_text_message(message: Message) -> None:
                 history = history[:-1]
 
             image_urls = case_service.get_recent_image_urls_for_case(case.id, limit=5)
+            extra_context = case_service.get_system_context(message.from_user.id)
 
             llm_service = LLMService()
             assistant_reply = await asyncio.to_thread(
@@ -57,6 +58,7 @@ async def handle_text_message(message: Message) -> None:
                 case.summary,
                 history,
                 image_urls if image_urls else None,
+                extra_context,
             )
 
             case_service.save_assistant_message(

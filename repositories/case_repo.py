@@ -23,6 +23,19 @@ class CaseRepository:
         stmt = select(Case).where(Case.id == case_id)
         return self.session.execute(stmt).scalar_one_or_none()
 
+    def recent_closed_summaries(self, user_id: int, limit: int = 5) -> list[str]:
+        stmt = (
+            select(Case.summary)
+            .where(
+                Case.user_id == user_id,
+                Case.status == "closed",
+                Case.summary.is_not(None),
+            )
+            .order_by(Case.closed_at.desc())
+            .limit(limit)
+        )
+        return [row[0] for row in self.session.execute(stmt).all() if row[0]]
+
     def create_case(self, user_id: int, title: str | None = None) -> Case:
         now = datetime.now(timezone.utc)
         case = Case(
