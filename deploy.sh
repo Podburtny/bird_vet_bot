@@ -13,8 +13,10 @@ rsync -az --delete \
   ./ "$HOST:$DIR/"
 
 ssh "$HOST" "set -e; cd $DIR; \
-  [ -d venv ] || python3 -m venv venv; \
+  [ -d venv ] || python3.11 -m venv venv; \
+  venv/bin/pip install -q --upgrade pip >/dev/null; \
   venv/bin/pip install -q -r requirements.txt; \
-  systemctl restart bird-vet-bot"
+  systemctl restart bird-vet-bot 2>/dev/null \
+    || echo '(unit bird-vet-bot ещё не установлен — установи его один раз, см. README)'"
 
 echo "Деплой завершён."

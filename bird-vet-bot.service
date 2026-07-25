@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 
-# пользователь Linux под которым будет работать бот
-User=botuser
+# пользователь Linux под которым работает бот
+User=root
 
 # папка проекта на сервере
 WorkingDirectory=/opt/bird-vet-bot
