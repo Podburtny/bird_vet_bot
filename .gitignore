@@ -27,4 +27,5 @@ data/
 
 # OS
 .DS_Store
-Thumbs.db.venv-test/
+Thumbs.db
+.venv-test/
